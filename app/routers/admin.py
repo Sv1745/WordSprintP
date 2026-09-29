@@ -92,7 +92,9 @@ async def update_admin_config(request: Request):
     }
 
 @router.get("/admin/report")
+@router.get("/admin/reports")
 @router.get("/wordsprint/admin/report")
+@router.get("/wordsprint/admin/reports")
 async def get_admin_reports(request: Request):
     if not check_admin_auth(request):
         return JSONResponse(
