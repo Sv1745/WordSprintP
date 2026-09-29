@@ -91,7 +91,8 @@ async def register(request: Request):
             content={"success": False, "message": val_err}
         )
 
-    success, message = register_user(username, password, role)
+    # Public GUI registrations are strictly assigned 'player' role
+    success, message = register_user(username, password, role='player')
     if success:
         return JSONResponse(
             status_code=status.HTTP_201_CREATED,
