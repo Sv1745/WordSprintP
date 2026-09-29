@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.config import SECRET_KEY
+from app.database import fetch_one
 
 app = FastAPI(
     title="WordSprint API",
@@ -28,3 +28,18 @@ def health_check():
     return {
         "status": "healthy"
     }
+
+@app.get("/db-health")
+def db_health_check():
+    try:
+        user_count = fetch_one("SELECT COUNT(*) as count FROM users")
+        return {
+            "status": "connected",
+            "user_count": user_count["count"] if user_count else 0
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "detail": str(e)
+        }
+
