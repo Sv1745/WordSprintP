@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WordSprint - Player Profile</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <header>
+        <h1>WordSprint</h1>
+        <nav>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="game.html">Play Game</a>
+            <a href="profile.html" class="active">Profile</a>
+            <button id="logout-button" class="btn btn-secondary btn-sm" style="margin-left: 0.5rem;">Logout</button>
+        </nav>
+    </header>
+
+    <main style="align-items: flex-start; padding-top: 2.5rem;">
+        <div class="card" style="max-width: 750px;">
+            <div class="game-header">
+                <div>
+                    <h2>Player Profile</h2>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.2rem;">Manage your user account credentials and view your overall match record.</p>
+                </div>
+            </div>
+
+            <div id="error-message" class="error-message"></div>
+            <div id="success-message" class="success-message"></div>
+
+            <!-- Profile Info Display Box -->
+            <div class="profile-info-box">
+                <p><strong>Username:</strong> <span id="profile-uname">Loading...</span></p>
+                <p><strong>Role:</strong> <span id="profile-role">Loading...</span></p>
+                <p><strong>Member Since:</strong> <span id="profile-created">Loading...</span></p>
+            </div>
+
+            <!-- Edit Profile Form -->
+            <form id="edit-profile-form" class="form" style="margin-top: 1.75rem; background: #ffffff; border: 1px solid var(--border-color); padding: 1.75rem; border-radius: 10px; box-shadow: var(--shadow-sm);">
+                <h3 style="color: var(--text-primary); font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem;">Update Credentials</h3>
+
+                <div class="form-group">
+                    <label for="edit-username">New Username (Optional)</label>
+                    <input type="text" id="edit-username" name="username" placeholder="Leave blank to keep current">
+                    <small style="color: var(--text-muted); font-size: 0.8rem;">Min 5 characters (uppercase & lowercase letters required)</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="old-password">Old Password (Required to change password)</label>
+                    <input type="password" id="old-password" name="oldPassword" placeholder="Enter current password">
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-password">New Password</label>
+                    <input type="password" id="edit-password" name="newPassword" placeholder="Enter new password">
+                    <small style="color: var(--text-muted); font-size: 0.8rem;">Min 5 characters (letters, numbers, & special char: $, %, *, @, #, !, &)</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm-password">Confirm New Password</label>
+                    <input type="password" id="confirm-password" name="confirmPassword" placeholder="Confirm new password">
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="align-self: flex-start; margin-top: 0.5rem;">Save Changes</button>
+            </form>
+
+            <!-- All Games History List -->
+            <section style="margin-top: 2.25rem;">
+                <h3 style="color: var(--text-primary); margin-bottom: 0.85rem; font-size: 1.1rem; font-weight: 700;">Complete Match History</h3>
+                <div id="all-games-list">
+                    <p style="color: var(--text-muted);">Loading match history...</p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <p>WordSprint. Word Challenge Application.</p>
+    </footer>
+
+    <script src="js/profile.js"></script>
+</body>
+
+</html>

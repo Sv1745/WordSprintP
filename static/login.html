@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WordSprint - Account Sign In</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <header>
+        <h1>WordSprint</h1>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="login.html" class="active">Login</a>
+            <a href="register.html">Register</a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="card">
+            <div style="text-align: center; margin-bottom: 1.75rem;">
+                <h2 style="font-size: 1.75rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.35rem;">Sign In to Account</h2>
+                <p style="color: var(--text-muted); font-size: 0.92rem;">Enter your credentials to access your WordSprint dashboard.</p>
+            </div>
+
+            <div id="error-message" class="error-message"></div>
+            <div id="success-message" class="success-message"></div>
+
+            <form id="login-form" class="form">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" placeholder="e.g. PlayerOne" required autocomplete="username">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter your password" required autocomplete="current-password">
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">Sign In</button>
+            </form>
+
+            <div class="button-group" style="margin-top: 1.75rem; padding-top: 1.25rem; border-top: 1px solid var(--border-color);">
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Don't have an account? <a href="register.html" style="color: var(--brand-blue); font-weight: 600; text-decoration: none;">Create an account</a></p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>WordSprint. Word Challenge Application.</p>
+    </footer>
+
+    <script src="js/auth.js"></script>
+</body>
+
+</html>

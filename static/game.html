@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WordSprint - Game Arena</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <header>
+        <h1>WordSprint</h1>
+        <nav>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="profile.html">Profile</a>
+            <a href="game.html" class="active">Play Game</a>
+            <button id="logout-button" class="btn btn-secondary btn-sm" style="margin-left: 0.5rem;">Logout</button>
+        </nav>
+    </header>
+
+    <main style="padding-top: 2.5rem;">
+        <section class="card game-container">
+            <div class="game-header">
+                <div>
+                    <h2>Word Match Arena</h2>
+                    <p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 0.15rem;">Guess the secret 5-letter word within your attempt limit.</p>
+                </div>
+                <div class="game-info">
+                    <span>Attempts: <strong id="attempt-count" style="color: var(--brand-blue);">0</strong>/<strong id="max-attempts-count">6</strong></span>
+                    <span>Status: <strong id="game-status" style="color: var(--text-primary);">IDLE</strong></span>
+                </div>
+            </div>
+
+            <div id="error-message" class="error-message"></div>
+            <div id="success-message" class="success-message"></div>
+
+            <!-- Start Game Control -->
+            <div id="start-section" class="button-group" style="margin-bottom: 1.5rem;">
+                <button id="start-game-button" class="btn btn-primary" style="padding: 0.85rem 2rem; font-size: 1rem;">Start New Game</button>
+            </div>
+
+            <!-- Game Grid Board (Dynamically populated by JS) -->
+            <div id="game-board" class="game-board"></div>
+
+            <!-- Guess Submission Form -->
+            <form id="guess-form" class="form" style="display: none; margin-top: 1.5rem;">
+                <div class="form-group">
+                    <label for="guess-input">Enter 5-Letter Word</label>
+                    <input type="text" id="guess-input" maxlength="5" minlength="5" placeholder="e.g. APPLE" required
+                        style="text-transform: uppercase; text-align: center; font-size: 1.3rem; letter-spacing: 0.25em; font-weight: 700;">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Submit Guess</button>
+            </form>
+        </section>
+    </main>
+
+    <footer>
+        <p>WordSprint. Word Challenge Application.</p>
+    </footer>
+
+    <script src="js/game.js"></script>
+</body>
+
+</html>

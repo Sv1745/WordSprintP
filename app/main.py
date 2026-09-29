@@ -1,9 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from app.config import SECRET_KEY
 from app.database import fetch_one
-from app.routers import auth, game
+from app.routers import auth, game, admin
 
 app = FastAPI(
     title="WordSprint API",
@@ -26,15 +27,10 @@ app.add_middleware(
     same_site="lax"
 )
 
+# API Routers
 app.include_router(auth.router)
 app.include_router(game.router)
-
-@app.get("/")
-def read_root():
-    return {
-        "status": "success",
-        "message": "WordSprint Python Backend is running!"
-    }
+app.include_router(admin.router)
 
 @app.get("/health")
 def health_check():
@@ -55,3 +51,6 @@ def db_health_check():
             "status": "error",
             "detail": str(e)
         }
+
+# Mount Static Files (Serving HTML, CSS, JS frontend)
+app.mount("/", StaticFiles(directory="static", html=True), name="static")

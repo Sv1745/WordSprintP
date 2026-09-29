@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WordSprint - Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <header>
+        <h1>WordSprint</h1>
+        <nav>
+            <a href="dashboard.html" class="active">Dashboard</a>
+            <a href="game.html">Play Game</a>
+            <a href="profile.html">Profile</a>
+            <button id="logout-button" class="btn btn-secondary btn-sm" style="margin-left: 0.5rem;">Logout</button>
+        </nav>
+    </header>
+
+    <main style="align-items: flex-start; padding-top: 2.5rem;">
+        <div class="card" style="max-width: 900px;">
+            <div class="game-header">
+                <div>
+                    <h2>Player Dashboard</h2>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.2rem;">Overview of your matches, streak performance, and active sessions.</p>
+                </div>
+                <span id="user-welcome" style="font-weight: 700; color: var(--brand-blue); background: var(--brand-blue-light); padding: 0.4rem 0.9rem; border-radius: 9999px; border: 1px solid var(--brand-blue-border); font-size: 0.88rem;">Welcome!</span>
+            </div>
+
+            <div id="error-message" class="error-message"></div>
+            <div id="success-message" class="success-message"></div>
+
+            <!-- Stats Overview Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="stat-num" id="stat-total">0</span>
+                    <span class="stat-label">Total Games</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-num" id="stat-wins" style="color: var(--tile-green);">0</span>
+                    <span class="stat-label">Wins</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-num" id="stat-losses" style="color: var(--btn-danger-bg);">0</span>
+                    <span class="stat-label">Losses</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-num" id="stat-inprogress" style="color: var(--tile-yellow);">0</span>
+                    <span class="stat-label">In-Progress</span>
+                </div>
+            </div>
+
+            <div class="button-group" style="justify-content: flex-start; margin-bottom: 2rem;">
+                <a href="game.html" class="btn btn-primary">Start New Game</a>
+                <a href="profile.html" class="btn btn-secondary">View Profile</a>
+            </div>
+
+            <!-- Active / Unfinished Games Section -->
+            <section style="margin-top: 2rem; background: var(--bg-main); padding: 1.5rem; border-radius: 10px; border: 1px solid var(--border-color);">
+                <h3 style="margin-bottom: 0.85rem; color: var(--text-primary); font-size: 1.1rem; font-weight: 700;">Active & Unfinished Games</h3>
+                <div id="active-games-list">
+                    <p style="color: var(--text-muted);">Loading active games...</p>
+                </div>
+            </section>
+
+            <!-- Recent Finished Games Section -->
+            <section style="margin-top: 2rem;">
+                <h3 style="margin-bottom: 0.85rem; color: var(--text-primary); font-size: 1.1rem; font-weight: 700;">Recent Game History</h3>
+                <div id="finished-games-list">
+                    <p style="color: var(--text-muted);">Loading history...</p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <p>WordSprint. Word Challenge Application.</p>
+    </footer>
+
+    <script src="js/dashboard.js"></script>
+</body>
+
+</html>
