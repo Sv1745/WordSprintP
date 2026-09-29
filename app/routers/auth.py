@@ -27,43 +27,39 @@ class LoginSchema(BaseModel):
     password: Optional[str] = None
 
 async def parse_request_credentials(request: Request):
-    """Extract credentials from JSON body or Form data."""
-    content_type = request.headers.get("content-type", "")
-    username = None
-    password = None
-    role = "player"
-    old_password = None
-    new_password = None
-    confirm_password = None
+    """Extract credentials from JSON body, Form data, or Query params."""
+    username = request.query_params.get("username") or request.query_params.get("uname")
+    password = request.query_params.get("password")
+    role = request.query_params.get("role", "player")
+    old_password = request.query_params.get("oldPassword")
+    new_password = request.query_params.get("newPassword")
+    confirm_password = request.query_params.get("confirmPassword")
 
-    if "application/json" in content_type:
-        try:
-            data = await request.json()
-            if isinstance(data, dict):
-                username = data.get("username") or data.get("uname")
-                password = data.get("password")
-                role = data.get("role", "player")
-                old_password = data.get("oldPassword")
-                new_password = data.get("newPassword") or data.get("password")
-                confirm_password = data.get("confirmPassword")
-        except Exception:
-            pass
-    else:
+    try:
+        data = await request.json()
+        if isinstance(data, dict):
+            username = username or data.get("username") or data.get("uname")
+            password = password or data.get("password")
+            role = data.get("role") or role or "player"
+            old_password = old_password or data.get("oldPassword")
+            new_password = new_password or data.get("newPassword") or data.get("password")
+            confirm_password = confirm_password or data.get("confirmPassword")
+    except Exception:
         try:
             form = await request.form()
-            username = form.get("username") or form.get("uname")
-            password = form.get("password")
-            role = form.get("role", "player")
-            old_password = form.get("oldPassword")
-            new_password = form.get("newPassword") or form.get("password")
-            confirm_password = form.get("confirmPassword")
+            username = username or form.get("username") or form.get("uname")
+            password = password or form.get("password")
+            role = form.get("role") or role or "player"
+            old_password = old_password or form.get("oldPassword")
+            new_password = new_password or form.get("newPassword") or form.get("password")
+            confirm_password = confirm_password or form.get("confirmPassword")
         except Exception:
             pass
 
     return {
         "username": username,
         "password": password,
-        "role": role,
+        "role": role or "player",
         "oldPassword": old_password,
         "newPassword": new_password,
         "confirmPassword": confirm_password
@@ -130,6 +126,7 @@ async def login(request: Request):
             content={"success": False, "message": "Invalid username or password!"}
         )
 
+    request.session.clear()
     request.session["user_id"] = user["user_id"]
     request.session["uname"] = user["uname"]
     request.session["role"] = user["role"]
