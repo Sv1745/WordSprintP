@@ -293,8 +293,8 @@ async def update_profile(request: Request):
         )
 
     params.append(user_id)
-    query = f"UPDATE users SET {
-.join(update_fields)} WHERE user_id = %s"
+    set_clause = ", ".join(update_fields)
+    query = f"UPDATE users SET {set_clause} WHERE user_id = %s"
     affected = execute_query(query, tuple(params))
 
     if affected > 0:
@@ -309,4 +309,3 @@ async def update_profile(request: Request):
         status_code=status.HTTP_400_BAD_REQUEST,
         content={"success": False, "message": "No changes made or update failed"}
     )
-
