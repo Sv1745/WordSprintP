@@ -1,6 +1,6 @@
 # WordSprint — Python FastAPI Backend
 
-WordSprint is a web-based word guessing application built with **Python 3.11**, **FastAPI**, **Uvicorn**, and a **PostgreSQL** relational database. Players guess a secret 5-letter word within a configurable number of attempts (default: 5) and receive letter-by-letter visual feedback (Green = Correct position, Yellow = Present in word, Gray = Absent).
+The project, WordSprint, is the project name assigned to the “Guess the Word” game. The Python implementation is a web-based word-guessing application built with Python 3.11, FastAPI, Uvicorn, and a PostgreSQL relational database. Players guess a secret 5-letter word within a configurable number of attempts (default: 5) and receive letter-by-letter visual feedback (Green = Correct position, Yellow = Present in word, Gray = Absent).
 
 ---
 
