@@ -14,7 +14,7 @@ from app.auth import (
 )
 from app.database import fetch_all, execute_query
 
-router = APIRouter(tags=["Authentication"])
+router = APIRouter(tags=["Authentication & User Profile"])
 
 class RegisterSchema(BaseModel):
     username: Optional[str] = None
@@ -39,12 +39,13 @@ async def parse_request_credentials(request: Request):
     if "application/json" in content_type:
         try:
             data = await request.json()
-            username = data.get("username") or data.get("uname")
-            password = data.get("password")
-            role = data.get("role", "player")
-            old_password = data.get("oldPassword")
-            new_password = data.get("newPassword") or data.get("password")
-            confirm_password = data.get("confirmPassword")
+            if isinstance(data, dict):
+                username = data.get("username") or data.get("uname")
+                password = data.get("password")
+                role = data.get("role", "player")
+                old_password = data.get("oldPassword")
+                new_password = data.get("newPassword") or data.get("password")
+                confirm_password = data.get("confirmPassword")
         except Exception:
             pass
     else:
@@ -70,6 +71,7 @@ async def parse_request_credentials(request: Request):
 
 @router.post("/register")
 @router.post("/wordsprint/register")
+@router.post("/api/register")
 async def register(request: Request):
     creds = await parse_request_credentials(request)
     username = creds.get("username")
@@ -108,6 +110,7 @@ async def register(request: Request):
 
 @router.post("/login")
 @router.post("/wordsprint/login")
+@router.post("/api/login")
 async def login(request: Request):
     creds = await parse_request_credentials(request)
     username = creds.get("username")
@@ -137,6 +140,7 @@ async def login(request: Request):
 
 @router.post("/logout")
 @router.post("/wordsprint/logout")
+@router.post("/api/logout")
 async def logout(request: Request):
     request.session.clear()
     return JSONResponse(
@@ -144,8 +148,28 @@ async def logout(request: Request):
         content={"success": True, "message": "Logout successful"}
     )
 
+@router.get("/auth/check")
+@router.get("/wordsprint/auth/check")
+@router.get("/api/auth/check")
+async def check_auth(request: Request):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content={"authenticated": False, "message": "Not logged in"}
+        )
+    return {
+        "authenticated": True,
+        "user": {
+            "userId": user_id,
+            "username": request.session.get("uname"),
+            "role": request.session.get("role")
+        }
+    }
+
 @router.get("/profile")
 @router.get("/wordsprint/profile")
+@router.get("/api/profile")
 async def get_profile(request: Request):
     user_id = request.session.get("user_id")
     if not user_id:
@@ -200,8 +224,66 @@ async def get_profile(request: Request):
         "games": games_formatted
     }
 
+@router.get("/player/stats")
+@router.get("/api/player/stats")
+async def get_player_stats(request: Request):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content={"success": False, "message": "Please log in first"}
+        )
+
+    games_raw = fetch_all("SELECT status FROM games WHERE user_id = %s", (user_id,))
+    total_games = len(games_raw)
+    wins = sum(1 for g in games_raw if g.get("status") == "WON")
+    losses = sum(1 for g in games_raw if g.get("status") == "LOST")
+    in_progress = sum(1 for g in games_raw if g.get("status") == "IN_PROGRESS")
+
+    return {
+        "success": True,
+        "stats": {
+            "totalGames": total_games,
+            "wins": wins,
+            "losses": losses,
+            "inProgress": in_progress
+        }
+    }
+
+@router.get("/player/history")
+@router.get("/api/player/history")
+async def get_player_history(request: Request):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content={"success": False, "message": "Please log in first"}
+        )
+
+    games_raw = fetch_all(
+        "SELECT game_id, status, started_at, completed_at FROM games WHERE user_id = %s ORDER BY started_at DESC",
+        (user_id,)
+    )
+    games_formatted = []
+    for g in games_raw:
+        item = {
+            "gameId": g["game_id"],
+            "status": g["status"],
+            "startedAt": str(g["started_at"]) if g.get("started_at") else ""
+        }
+        if g.get("completed_at"):
+            item["completedAt"] = str(g["completed_at"])
+        games_formatted.append(item)
+
+    return {
+        "success": True,
+        "games": games_formatted
+    }
+
 @router.post("/profile")
 @router.post("/wordsprint/profile")
+@router.put("/profile")
+@router.put("/api/profile")
 async def update_profile(request: Request):
     user_id = request.session.get("user_id")
     if not user_id:

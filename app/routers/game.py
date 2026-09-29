@@ -9,8 +9,9 @@ from app.game import (
     update_game_status,
     process_guess
 )
+from app.database import fetch_one
 
-router = APIRouter(tags=["Game Logic"])
+router = APIRouter(tags=["Game REST API"])
 
 async def get_request_params(request: Request):
     """Extract params from query, form data, or JSON body."""
@@ -48,10 +49,14 @@ async def handle_game(request: Request):
     action = params.get("action")
 
     if not action:
-        return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            content={"success": False, "message": "Missing action"}
-        )
+        game_id_param = params.get("gameId")
+        if game_id_param and request.method == "GET":
+            action = "details"
+        else:
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content={"success": False, "message": "Missing action"}
+            )
 
     action = action.lower().strip()
 
@@ -190,8 +195,109 @@ async def handle_game(request: Request):
         content={"success": False, "message": "Invalid action"}
     )
 
+@router.post("/api/game/start")
+async def api_start_game(request: Request):
+    user_id = get_current_user_id(request)
+    if not user_id:
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content={"success": False, "message": "Please log in first"}
+        )
+    game, msg = create_new_game(user_id)
+    if not game:
+        status_code = status.HTTP_403_FORBIDDEN if "Daily limit" in msg else status.HTTP_400_BAD_REQUEST
+        return JSONResponse(status_code=status_code, content={"success": False, "message": msg})
+    return JSONResponse(
+        status_code=status.HTTP_201_CREATED,
+        content={
+            "success": True,
+            "gameId": game["game_id"],
+            "userId": game["user_id"],
+            "status": game["status"],
+            "maxAttempts": game["max_attempts"]
+        }
+    )
+
+@router.get("/api/game/current")
+async def api_get_current_game(request: Request):
+    user_id = get_current_user_id(request)
+    if not user_id:
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content={"success": False, "message": "Please log in first"}
+        )
+    active = fetch_one(
+        "SELECT game_id FROM games WHERE user_id = %s AND status = 'IN_PROGRESS' ORDER BY started_at DESC LIMIT 1",
+        (user_id,)
+    )
+    if not active:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"success": False, "message": "No active game found"}
+        )
+    game_id = active["game_id"]
+    game = get_game_by_id(game_id)
+    guesses_raw = get_guesses_for_game(game_id)
+    config = get_game_config()
+
+    return {
+        "success": True,
+        "gameId": game["game_id"],
+        "userId": game["user_id"],
+        "status": game["status"],
+        "maxAttempts": config["max_attempts"],
+        "guesses": [
+            {
+                "guessNumber": g["guess_number"],
+                "guessedWord": g["guessed_word"],
+                "result": g["result"]
+            }
+            for g in guesses_raw
+        ]
+    }
+
+@router.get("/api/game/{game_id}")
+async def api_get_game_by_id(game_id: int, request: Request):
+    user_id = get_current_user_id(request)
+    if not user_id:
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content={"success": False, "message": "Please log in first"}
+        )
+    game = get_game_by_id(game_id)
+    if not game:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"success": False, "message": "Game not found"}
+        )
+    if game["user_id"] != user_id:
+        return JSONResponse(
+            status_code=status.HTTP_403_FORBIDDEN,
+            content={"success": False, "message": "Access denied. You can only view your own game."}
+        )
+
+    guesses_raw = get_guesses_for_game(game_id)
+    config = get_game_config()
+
+    return {
+        "success": True,
+        "gameId": game["game_id"],
+        "userId": game["user_id"],
+        "status": game["status"],
+        "maxAttempts": config["max_attempts"],
+        "guesses": [
+            {
+                "guessNumber": g["guess_number"],
+                "guessedWord": g["guessed_word"],
+                "result": g["result"]
+            }
+            for g in guesses_raw
+        ]
+    }
+
 @router.post("/guess")
 @router.post("/wordsprint/guess")
+@router.post("/api/guess")
 async def handle_guess(request: Request):
     user_id = get_current_user_id(request)
     if not user_id:
