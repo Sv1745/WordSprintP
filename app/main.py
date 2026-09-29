@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
+from app.config import SECRET_KEY
 from app.database import fetch_one
+from app.routers import auth
 
 app = FastAPI(
     title="WordSprint API",
@@ -15,6 +18,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=SECRET_KEY,
+    session_cookie="SESSIONID",
+    same_site="lax"
+)
+
+app.include_router(auth.router)
 
 @app.get("/")
 def read_root():
