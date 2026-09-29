@@ -150,22 +150,27 @@ def process_guess(game_id: int, user_id: int, guessed_word: str, requested_guess
     if len(user_guess) != 5:
         return None, 400, "Guess must be a 5-letter word"
 
+    config = get_game_config()
+    max_attempts = config["max_attempts"]
+
     previous_guesses = get_guesses_for_game(game_id)
+    if len(previous_guesses) >= max_attempts:
+        update_game_status(game_id, "LOST")
+        return None, 400, f"Maximum guess limit ({max_attempts}) reached for this game."
+
     guess_number = len(previous_guesses) + 1
-    if requested_guess_number and requested_guess_number > 0:
-        guess_number = requested_guess_number
 
     result = evaluate_guess_feedback(user_guess, target_word)
     is_correct = (user_guess == target_word)
 
     # Save guess
-    execute_query(
-        "INSERT INTO guesses (game_id, guess_number, guessed_word, result, created_at) VALUES (%s, %s, %s, %s, %s)",
-        (game_id, guess_number, user_guess, result, datetime.now())
-    )
-
-    config = get_game_config()
-    max_attempts = config["max_attempts"]
+    try:
+        execute_query(
+            "INSERT INTO guesses (game_id, guess_number, guessed_word, result, created_at) VALUES (%s, %s, %s, %s, %s)",
+            (game_id, guess_number, user_guess, result, datetime.now())
+        )
+    except Exception as e:
+        return None, 400, f"Failed to save guess: {str(e)}"
 
     status_str = "IN_PROGRESS"
     if is_correct:
