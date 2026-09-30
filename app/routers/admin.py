@@ -204,10 +204,36 @@ async def get_admin_reports(request: Request):
         for r in players_raw
     ]
 
+    # 5. Match Activity & Game Logs
+    match_raw = fetch_all("""
+        SELECT g.game_id, u.uname, w.word, g.started_at, g.completed_at, g.status,
+               COUNT(gu.guess_id) AS attempts_made
+        FROM games g
+        JOIN users u ON g.user_id = u.user_id
+        LEFT JOIN words w ON g.word_id = w.word_id
+        LEFT JOIN guesses gu ON g.game_id = gu.game_id
+        GROUP BY g.game_id, u.uname, w.word, g.started_at, g.completed_at, g.status
+        ORDER BY g.started_at DESC
+        LIMIT 500
+    """)
+    match_reports = [
+        {
+            "gameId": r["game_id"],
+            "username": r["uname"],
+            "word": r["word"] or "-",
+            "startedAt": str(r["started_at"]) if r["started_at"] else "",
+            "completedAt": str(r["completed_at"]) if r["completed_at"] else "-",
+            "status": r["status"],
+            "attempts": r["attempts_made"]
+        }
+        for r in match_raw
+    ]
+
     return {
         "success": True,
         "stats": stats,
         "dailyReports": daily_reports,
         "userDailyReports": user_daily_reports,
-        "reports": reports
+        "reports": reports,
+        "matchReports": match_reports
     }

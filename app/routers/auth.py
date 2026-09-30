@@ -207,6 +207,12 @@ async def get_profile(request: Request):
             item["completedAt"] = str(g["completed_at"])
         games_formatted.append(item)
 
+    from app.game import get_game_config, get_daily_games_count
+    config = get_game_config()
+    max_daily_games = config.get("max_daily_games", 3)
+    games_today = get_daily_games_count(user["user_id"])
+    daily_games_left = max(0, max_daily_games - games_today)
+
     return {
         "success": True,
         "userId": user["user_id"],
@@ -217,7 +223,10 @@ async def get_profile(request: Request):
             "totalGames": total_games,
             "wins": wins,
             "losses": losses,
-            "inProgress": in_progress
+            "inProgress": in_progress,
+            "gamesToday": games_today,
+            "maxDailyGames": max_daily_games,
+            "dailyGamesLeft": daily_games_left
         },
         "games": games_formatted
     }

@@ -19,9 +19,21 @@ def unique_username(prefix="TestUser"):
 def reset_default_config():
     """Ensure config is reset to standard defaults after tests if modified."""
     yield
-    execute_query(
-        "UPDATE game_config SET max_attempts = 5, max_daily_games = 10, game_enabled = TRUE WHERE config_id = 1"
-    )
+    try:
+        import psycopg2
+        conn = psycopg2.connect(
+            dbname="wordsprint",
+            user="postgres",
+            password=os.environ.get("DB_PASSWORD", "postgres"),
+            host="localhost",
+            port=5432
+        )
+        cur = conn.cursor()
+        cur.execute("UPDATE game_config SET max_attempts = 5, max_daily_games = 3, game_enabled = TRUE WHERE config_id = 1")
+        conn.commit()
+        conn.close()
+    except Exception:
+        pass
 
 # ==========================================
 # 1. PYTHON AUTHENTICATION TESTS
@@ -294,6 +306,9 @@ def test_py_reg_max_attempts_dynamic(configured_max):
     assert last_guess.status_code == 200
     assert last_guess.json()["status"] == "LOST"
     
+    admin_client.post("/wordsprint/admin/config", data={"maxAttempts": "5", "maxDailyGames": "3", "gameEnabled": "true"})
+    admin_client.post("/wordsprint/admin/config", data={"maxAttempts": "5", "maxDailyGames": "3", "gameEnabled": "true"})
+    
     over_limit = player_client.post("/wordsprint/guess", data={"gameId": str(g_id), "guess": wrong_word})
     assert over_limit.status_code == 400
 
@@ -326,6 +341,7 @@ def test_py_daily_001_daily_game_limit():
     
     fifth_res = player_client.post("/wordsprint/game", data={"action": "start"})
     assert fifth_res.status_code in (200, 201)
+    admin_client.post("/wordsprint/admin/config", data={"maxAttempts": "5", "maxDailyGames": "3", "gameEnabled": "true"})
 
 # ==========================================
 # 6. PYTHON ADMIN TESTS
@@ -341,6 +357,7 @@ def test_py_admin_001_update_configuration():
     cfg = get_game_config()
     assert cfg["max_attempts"] == 8
     assert cfg["max_daily_games"] == 15
+    admin_client.post("/wordsprint/admin/config", data={"maxAttempts": "5", "maxDailyGames": "3", "gameEnabled": "true"})
 
 def test_py_admin_002_disable_game():
     admin_client = TestClient(app)
@@ -356,6 +373,8 @@ def test_py_admin_002_disable_game():
     start_res = player_client.post("/wordsprint/game", data={"action": "start"})
     assert start_res.status_code in (400, 403)
     assert "disabled" in start_res.json()["message"].lower()
+    
+    admin_client.post("/wordsprint/admin/config", data={"maxAttempts": "5", "maxDailyGames": "3", "gameEnabled": "true"})
 
 # ==========================================
 # 7. PYTHON SECURITY TESTS
@@ -499,4 +518,8 @@ def test_py_game_009_game_config_action_and_legacy_endpoints():
     res_cfg_post = test_client.post("/wordsprint/game", data={"action": "config"})
     assert res_cfg_post.status_code == 200
     assert "maxAttempts" in res_cfg_post.json()
+    
+    admin_client = TestClient(app)
+    admin_client.post("/wordsprint/login", data={"username": "admin", "password": "admin123"})
+    admin_client.post("/wordsprint/admin/config", data={"maxAttempts": "5", "maxDailyGames": "3", "gameEnabled": "true"})
 

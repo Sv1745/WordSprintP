@@ -125,6 +125,15 @@ async def handle_game(request: Request):
 
         guesses_raw = get_guesses_for_game(game_id)
         config = get_game_config()
+        max_attempts = config["max_attempts"]
+
+        status_str = game["status"]
+        if status_str == "IN_PROGRESS" and len(guesses_raw) >= max_attempts:
+            update_game_status(game_id, "LOST")
+            status_str = "LOST"
+            game["status"] = "LOST"
+
+        board_rows = max(max_attempts, len(guesses_raw))
 
         formatted_guesses = [
             {
@@ -139,8 +148,9 @@ async def handle_game(request: Request):
             "success": True,
             "gameId": game["game_id"],
             "userId": game["user_id"],
-            "status": game["status"],
-            "maxAttempts": config["max_attempts"],
+            "status": status_str,
+            "maxAttempts": max_attempts,
+            "boardRows": board_rows,
             "guesses": formatted_guesses
         }
 
@@ -239,13 +249,23 @@ async def api_get_current_game(request: Request):
     game = get_game_by_id(game_id)
     guesses_raw = get_guesses_for_game(game_id)
     config = get_game_config()
+    max_attempts = config["max_attempts"]
+
+    status_str = game["status"]
+    if status_str == "IN_PROGRESS" and len(guesses_raw) >= max_attempts:
+        update_game_status(game_id, "LOST")
+        status_str = "LOST"
+        game["status"] = "LOST"
+
+    board_rows = max(max_attempts, len(guesses_raw))
 
     return {
         "success": True,
         "gameId": game["game_id"],
         "userId": game["user_id"],
-        "status": game["status"],
-        "maxAttempts": config["max_attempts"],
+        "status": status_str,
+        "maxAttempts": max_attempts,
+        "boardRows": board_rows,
         "guesses": [
             {
                 "guessNumber": g["guess_number"],
@@ -278,13 +298,23 @@ async def api_get_game_by_id(game_id: int, request: Request):
 
     guesses_raw = get_guesses_for_game(game_id)
     config = get_game_config()
+    max_attempts = config["max_attempts"]
+
+    status_str = game["status"]
+    if status_str == "IN_PROGRESS" and len(guesses_raw) >= max_attempts:
+        update_game_status(game_id, "LOST")
+        status_str = "LOST"
+        game["status"] = "LOST"
+
+    board_rows = max(max_attempts, len(guesses_raw))
 
     return {
         "success": True,
         "gameId": game["game_id"],
         "userId": game["user_id"],
-        "status": game["status"],
-        "maxAttempts": config["max_attempts"],
+        "status": status_str,
+        "maxAttempts": max_attempts,
+        "boardRows": board_rows,
         "guesses": [
             {
                 "guessNumber": g["guess_number"],

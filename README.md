@@ -7,16 +7,19 @@ The project, WordSprint, is the project name assigned to the “Guess the Word�
 ## 📋 Features
 
 ### Player Features
-- **User Authentication**: Secure registration and login with salted BCrypt password hashing (`$2b$12$`) and session cookie management.
+- **User Authentication**: Secure registration and login with salted BCrypt password hashing ($2b$) and session cookie management.
 - **Word Evaluation Engine**: Real-time 2-pass feedback evaluation (Green / Yellow / Gray) for 5-letter uppercase guesses.
-- **Session Resumption**: Automatic recovery of active in-progress games (`/wordsprint/game/current`).
-- **Player Profile & History**: Summary statistics, win rates, current/max streaks, and chronological game history logs (`/wordsprint/game/history`).
-- **Daily Game Limits**: Enforced daily game allowance (default: 3 games per day).
+- **Daily Games Remaining Tracker**: Real-time dashboard tracker showing remaining games allowed for the day (X / Y Daily Games Left).
+- **Date & Status Match Filtering**: Interactive filtering in player dashboard to filter active & historical games by specific date and status (ALL, WON, LOST, IN_PROGRESS).
+- **Session Resumption & Exceeded Limits**: Automatic recovery of active in-progress games (/wordsprint/game/current) with dynamic attempt limit adaptation and exceeded-limit loss handling.
+- **Interactive Gameplay UI**: Floating rules & color-code helper modal positioned directly on the game canvas.
+- **Player Profile & History**: Summary statistics, win rates, current/max streaks, and chronological game history logs (/wordsprint/game/history).
 
 ### Admin Features
-- **Control Panel**: Administrative dashboard restricted to users with the `admin` role.
-- **Dynamic Configuration Tuning**: Real-time adjustment of `max_attempts` (5–20), `max_daily_games` (default: 3), and global `game_enabled` toggle without restarting the server.
-- **System Reports**: Platform-wide player metrics, total game counts, overall win percentages, player directory, and daily activity logs.
+- **Control Panel**: Administrative dashboard restricted to users with the dmin role.
+- **Dynamic Configuration Tuning**: Real-time adjustment of max_attempts (5-20), max_daily_games (default: 3), and global game_enabled toggle without restarting the server.
+- **Advanced Report Filtering**: Multi-dimensional report filtering by date, match status (ALL, WON, LOST, IN_PROGRESS), and live player username search across Match Activity, Daily System Activity, User Daily Activity, and Player Directory tables.
+- **Granular Match Auditing**: Detailed match-level logs with secret target word, guesses sequence, timestamps, and outcome.
 
 ---
 

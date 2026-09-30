@@ -5,7 +5,584 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WordSprint - Game Arena</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=5.0">
+    <style>
+        /* Canvas Layout spanning full page with centered container and top-right dropdown */
+        .game-main-layout {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 1.5rem 2rem;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            min-height: calc(100vh - 140px);
+        }
+
+        /* Rules Dropdown Container Anchored to the Far Right of the Canvas */
+        .rules-canvas-wrapper {
+            position: absolute;
+            top: 1.25rem;
+            right: 2.5rem;
+            z-index: 100;
+        }
+
+        .rules-canvas-btn {
+            width: 40px;
+            height: 40px;
+            background-color: #ffffff;
+            color: var(--brand-blue, #0033ad);
+            border: 1.5px solid var(--border-color, #cbd5e1);
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            outline: none;
+        }
+
+        .rules-canvas-btn:hover,
+        .rules-canvas-btn.active {
+            background-color: var(--brand-blue-light, #eff6ff);
+            color: #00227a;
+            border-color: #93c5fd;
+            transform: scale(1.05);
+            box-shadow: 0 4px 14px rgba(0, 51, 173, 0.18);
+        }
+
+        .rules-canvas-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Rules Secondary Dropdown Panel */
+        .rules-dropdown-panel {
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            width: 390px;
+            max-width: calc(100vw - 2rem);
+            max-height: calc(100vh - 120px);
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid var(--border-color, #cbd5e1);
+            box-shadow: 0 16px 36px rgba(15, 23, 42, 0.14), 0 4px 12px rgba(15, 23, 42, 0.06);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 150;
+            animation: dropdownSlide 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes dropdownSlide {
+            from {
+                opacity: 0;
+                transform: translateY(-8px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .rules-dropdown-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.85rem 1.15rem;
+            border-bottom: 1px solid var(--border-color, #e2e8f0);
+            background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+        }
+
+        .rules-dropdown-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--brand-blue, #0033ad);
+        }
+
+        .rules-dropdown-close {
+            background: none;
+            border: none;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-muted, #64748b);
+            cursor: pointer;
+            line-height: 1;
+            padding: 0.15rem 0.35rem;
+            border-radius: 4px;
+            transition: all 0.15s ease;
+        }
+
+        .rules-dropdown-close:hover {
+            color: var(--text-primary, #0f172a);
+            background-color: #f1f5f9;
+        }
+
+        .rules-dropdown-body {
+            padding: 1rem 1.15rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            max-height: calc(100vh - 180px);
+        }
+
+        .rules-section h3 {
+            font-size: 0.82rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted, #64748b);
+            margin: 0 0 0.35rem 0;
+        }
+
+        .rules-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            font-size: 0.82rem;
+            color: var(--text-secondary, #334155);
+            line-height: 1.4;
+        }
+
+        .rules-list li {
+            position: relative;
+            padding-left: 1.1rem;
+        }
+
+        .rules-list li::before {
+            content: "•";
+            position: absolute;
+            left: 0.2rem;
+            color: var(--brand-blue, #0033ad);
+            font-weight: 800;
+            font-size: 1rem;
+            line-height: 1;
+        }
+
+        /* Color Guide Rows */
+        .color-explanations {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .color-row {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            padding: 0.45rem 0.65rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-color, #e2e8f0);
+            background-color: #f8fafc;
+        }
+
+        .color-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.2rem 0.55rem;
+            border-radius: 5px;
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            color: #ffffff;
+            flex-shrink: 0;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .badge-green {
+            background-color: #059669;
+        }
+
+        .badge-yellow {
+            background-color: #d97706;
+        }
+
+        .badge-grey {
+            background-color: #64748b;
+        }
+
+        .color-text {
+            font-size: 0.8rem;
+            color: var(--text-secondary, #334155);
+            line-height: 1.3;
+        }
+
+        .rules-examples {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .rule-example-row {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            background-color: #f8fafc;
+            padding: 0.35rem 0.6rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-color, #e2e8f0);
+        }
+
+        .mini-tile-row {
+            display: inline-flex;
+            flex-direction: row;
+            gap: 0.2rem;
+            flex-shrink: 0;
+        }
+
+        .mini-tile {
+            width: 22px;
+            height: 22px;
+            background-color: #ffffff;
+            border: 1.5px solid var(--border-color, #cbd5e1);
+            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.74rem;
+            font-weight: 800;
+            color: var(--text-primary, #0f172a);
+            user-select: none;
+            box-sizing: border-box;
+        }
+
+        .mini-tile.tile-green {
+            background-color: #059669 !important;
+            border-color: #059669 !important;
+            color: #ffffff !important;
+        }
+
+        .mini-tile.tile-yellow {
+            background-color: #d97706 !important;
+            border-color: #d97706 !important;
+            color: #ffffff !important;
+        }
+
+        .mini-tile.tile-grey {
+            background-color: #64748b !important;
+            border-color: #64748b !important;
+            color: #ffffff !important;
+        }
+
+        .example-desc {
+            font-size: 0.78rem;
+            color: var(--text-secondary, #334155);
+            margin: 0;
+            line-height: 1.25;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 520px;
+            padding: 1.25rem 1.5rem !important;
+            box-sizing: border-box;
+            position: relative;
+            margin: 0 auto;
+        }
+
+        /* Game Arena Header */
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.6rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color, #e2e8f0);
+            width: 100%;
+        }
+
+        .game-title-group {
+            display: flex;
+            align-items: center;
+        }
+
+        .game-header h2 {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--text-primary, #0f172a);
+            line-height: 1.2;
+            margin: 0;
+        }
+
+        .game-info-badges {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .info-badge {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            background-color: var(--bg-main, #f8fafc);
+            border: 1px solid var(--border-color, #e2e8f0);
+            padding: 0.25rem 0.55rem;
+            border-radius: 6px;
+        }
+
+        .info-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            color: var(--text-muted, #64748b);
+        }
+
+        .info-val {
+            font-size: 0.88rem;
+            font-weight: 800;
+            color: var(--brand-blue, #0033ad);
+        }
+
+        .status-pill {
+            display: inline-block;
+            padding: 0.15rem 0.55rem;
+            border-radius: 9999px;
+            font-size: 0.72rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .status-idle {
+            background-color: #f1f5f9;
+            color: #475569;
+        }
+
+        .status-in-progress, .status-in_progress {
+            background-color: #eff6ff;
+            color: #0033ad;
+            border: 1px solid #bfdbfe;
+        }
+
+        .status-won {
+            background-color: #ecfdf5;
+            color: #047857;
+            border: 1px solid #a7f3d0;
+        }
+
+        .status-lost {
+            background-color: #fef2f2;
+            color: #b91c1c;
+            border: 1px solid #fecaca;
+        }
+
+        /* Board Sizing */
+        .game-board {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            margin: 0.5rem 0;
+        }
+
+        .board-row {
+            display: flex;
+            justify-content: center;
+            gap: 0.3rem;
+        }
+
+        .tile {
+            width: 44px;
+            height: 44px;
+            background-color: #ffffff;
+            border: 2px solid var(--border-color, #cbd5e1);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--text-primary, #0f172a);
+            text-transform: uppercase;
+            user-select: none;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-sizing: border-box;
+        }
+
+        .tile.pop {
+            transform: scale(1.08);
+            border-color: #64748b;
+        }
+
+        .tile.tile-green {
+            background-color: #059669 !important;
+            border-color: #059669 !important;
+            color: #ffffff !important;
+        }
+
+        .tile.tile-yellow {
+            background-color: #d97706 !important;
+            border-color: #d97706 !important;
+            color: #ffffff !important;
+        }
+
+        .tile.tile-grey {
+            background-color: #64748b !important;
+            border-color: #64748b !important;
+            color: #ffffff !important;
+        }
+
+        /* Guess Input Form */
+        .guess-form-compact {
+            display: flex;
+            gap: 0.5rem;
+            margin: 0.4rem 0;
+            width: 100%;
+        }
+
+        .guess-input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        #guess-input {
+            width: 100%;
+            height: 38px;
+            padding: 0 0.75rem;
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: 0.25em;
+            text-align: center;
+            text-transform: uppercase;
+            border-radius: 6px;
+            border: 2px solid var(--border-color, #cbd5e1);
+            background-color: #ffffff;
+            color: var(--text-primary, #0f172a);
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        #guess-input:focus {
+            border-color: var(--brand-blue, #0033ad);
+            box-shadow: 0 0 0 3px rgba(0, 51, 173, 0.12);
+        }
+
+        .btn-submit-guess {
+            height: 38px;
+            padding: 0 1.25rem;
+            font-size: 0.88rem;
+            font-weight: 700;
+            white-space: nowrap;
+            border-radius: 6px;
+        }
+
+        /* On-Screen 26-Letter Keyboard Tracker */
+        .keyboard-container {
+            width: 100%;
+            margin: 0.5rem 0 0.15rem 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            user-select: none;
+            box-sizing: border-box;
+        }
+
+        .keyboard-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.25rem;
+            width: 100%;
+        }
+
+        .key {
+            appearance: none;
+            -webkit-appearance: none;
+            font-family: 'Inter', -apple-system, sans-serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            border: 1px solid var(--border-color, #cbd5e1);
+            padding: 0;
+            margin: 0;
+            height: 38px;
+            border-radius: 6px;
+            cursor: pointer;
+            background-color: #e2e8f0;
+            color: #0f172a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-transform: uppercase;
+            flex: 1;
+            min-width: 0;
+            user-select: none;
+            transition: all 0.15s ease;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            outline: none;
+        }
+
+        .key:hover {
+            background-color: #cbd5e1;
+        }
+
+        .key:active {
+            transform: scale(0.94);
+        }
+
+        .key-wide {
+            flex: 1.4;
+            font-size: 0.7rem;
+            font-weight: 800;
+        }
+
+        .key.key-green {
+            background-color: #059669 !important;
+            border-color: #059669 !important;
+            color: #ffffff !important;
+        }
+
+        .key.key-yellow {
+            background-color: #d97706 !important;
+            border-color: #d97706 !important;
+            color: #ffffff !important;
+        }
+
+        .key.key-grey {
+            background-color: #64748b !important;
+            border-color: #64748b !important;
+            color: #ffffff !important;
+            opacity: 0.6;
+        }
+
+        @media (max-width: 768px) {
+            .rules-canvas-wrapper {
+                top: 0.75rem;
+                right: 1rem;
+            }
+            .rules-dropdown-panel {
+                width: 320px;
+                right: -0.5rem;
+            }
+            .game-main-layout {
+                padding: 1rem 0.5rem;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .key {
+                height: 36px;
+                font-size: 0.8rem;
+            }
+            .keyboard-row {
+                gap: 0.15rem;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -19,16 +596,113 @@
         </nav>
     </header>
 
-    <main style="padding-top: 2.5rem;">
+    <main class="game-main-layout">
+        <!-- Floating Rules Dropdown Wrapper on the Canvas Right Side -->
+        <div class="rules-canvas-wrapper">
+            <button type="button" id="rules-toggle-btn" class="rules-canvas-btn" title="How to Play & Color Rules" aria-label="Game Rules and Color Guide" aria-expanded="false">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            </button>
+
+            <!-- Secondary Dropdown Panel Anchored Directly to the Button -->
+            <div id="rules-dropdown" class="rules-dropdown-panel" style="display: none;">
+                <div class="rules-dropdown-header">
+                    <div class="rules-dropdown-title">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                        <span>How to Play & Rules</span>
+                    </div>
+                    <button type="button" id="close-rules-dropdown-btn" class="rules-dropdown-close" aria-label="Close Rules">&times;</button>
+                </div>
+
+                <div class="rules-dropdown-body">
+                    <div class="rules-section">
+                        <h3>Game Objective</h3>
+                        <ul class="rules-list">
+                            <li>Guess the <strong>5-letter secret word</strong> within your allowed attempt limit (default: 5 attempts).</li>
+                            <li>Each guess must be a valid 5-letter English word.</li>
+                            <li>Press <strong>ENTER</strong> (or click <strong>Submit Word</strong>) to submit your guess.</li>
+                        </ul>
+                    </div>
+
+                    <div class="rules-section">
+                        <h3>What Each Color Means</h3>
+                        <div class="color-explanations">
+                            <div class="color-row">
+                                <span class="color-badge badge-green">GREEN</span>
+                                <div class="color-text">
+                                    <strong>Correct Spot:</strong> Letter is in the word and in the <strong>exact right position</strong>.
+                                </div>
+                            </div>
+                            <div class="color-row">
+                                <span class="color-badge badge-yellow">YELLOW</span>
+                                <div class="color-text">
+                                    <strong>Wrong Spot:</strong> Letter is in the word, but in a <strong>different position</strong>.
+                                </div>
+                            </div>
+                            <div class="color-row">
+                                <span class="color-badge badge-grey">GRAY</span>
+                                <div class="color-text">
+                                    <strong>Not In Word:</strong> Letter is <strong>not present anywhere</strong> in the secret word.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="rules-section">
+                        <h3>Visual Examples</h3>
+                        <div class="rules-examples">
+                            <div class="rule-example-row">
+                                <div class="mini-tile-row">
+                                    <span class="mini-tile tile-green">W</span>
+                                    <span class="mini-tile">E</span>
+                                    <span class="mini-tile">A</span>
+                                    <span class="mini-tile">R</span>
+                                    <span class="mini-tile">Y</span>
+                                </div>
+                                <p class="example-desc"><strong>W</strong> is <strong>Green</strong> (correct spot).</p>
+                            </div>
+
+                            <div class="rule-example-row">
+                                <div class="mini-tile-row">
+                                    <span class="mini-tile">P</span>
+                                    <span class="mini-tile tile-yellow">I</span>
+                                    <span class="mini-tile">L</span>
+                                    <span class="mini-tile">O</span>
+                                    <span class="mini-tile">T</span>
+                                </div>
+                                <p class="example-desc"><strong>I</strong> is <strong>Yellow</strong> (wrong spot).</p>
+                            </div>
+
+                            <div class="rule-example-row">
+                                <div class="mini-tile-row">
+                                    <span class="mini-tile">V</span>
+                                    <span class="mini-tile">A</span>
+                                    <span class="mini-tile">G</span>
+                                    <span class="mini-tile tile-grey">U</span>
+                                    <span class="mini-tile">E</span>
+                                </div>
+                                <p class="example-desc"><strong>U</strong> is <strong>Gray</strong> (not in word).</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Centered Game Arena Section -->
         <section class="card game-container">
             <div class="game-header">
-                <div>
+                <div class="game-title-group">
                     <h2>Word Match Arena</h2>
-                    <p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 0.15rem;">Guess the secret 5-letter word within your attempt limit.</p>
                 </div>
-                <div class="game-info">
-                    <span>Attempts: <strong id="attempt-count" style="color: var(--brand-blue);">0</strong>/<strong id="max-attempts-count">6</strong></span>
-                    <span>Status: <strong id="game-status" style="color: var(--text-primary);">IDLE</strong></span>
+                <div class="game-info-badges">
+                    <div class="info-badge">
+                        <span class="info-label">Attempts</span>
+                        <span class="info-val"><strong id="attempt-count">0</strong>/<strong id="max-attempts-count">5</strong></span>
+                    </div>
+                    <div class="info-badge">
+                        <span class="info-label">Status</span>
+                        <span id="game-status" class="status-pill status-idle">IDLE</span>
+                    </div>
                 </div>
             </div>
 
@@ -36,22 +710,58 @@
             <div id="success-message" class="success-message"></div>
 
             <!-- Start Game Control -->
-            <div id="start-section" class="button-group" style="margin-bottom: 1.5rem;">
-                <button id="start-game-button" class="btn btn-primary" style="padding: 0.85rem 2rem; font-size: 1rem;">Start New Game</button>
+            <div id="start-section" class="button-group" style="margin-bottom: 0.6rem;">
+                <button id="start-game-button" class="btn btn-primary" style="padding: 0.65rem 2rem; font-size: 0.95rem; font-weight: 700;">Start New Game</button>
             </div>
 
             <!-- Game Grid Board (Dynamically populated by JS) -->
             <div id="game-board" class="game-board"></div>
 
-            <!-- Guess Submission Form -->
-            <form id="guess-form" class="form" style="display: none; margin-top: 1.5rem;">
-                <div class="form-group">
-                    <label for="guess-input">Enter 5-Letter Word</label>
-                    <input type="text" id="guess-input" maxlength="5" minlength="5" placeholder="e.g. APPLE" required
-                        style="text-transform: uppercase; text-align: center; font-size: 1.3rem; letter-spacing: 0.25em; font-weight: 700;">
+            <!-- Sleek Inline Guess Submission Form -->
+            <form id="guess-form" class="guess-form-compact" style="display: none;">
+                <div class="guess-input-wrapper">
+                    <input type="text" id="guess-input" maxlength="5" minlength="5" placeholder="5 LETTERS" required autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
                 </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%;">Submit Guess</button>
+                <button type="submit" class="btn btn-primary btn-submit-guess">Submit Word</button>
             </form>
+
+            <!-- 26 English Letters Keyboard Tracker -->
+            <div id="keyboard-container" class="keyboard-container">
+                <div class="keyboard-row">
+                    <button type="button" class="key" data-key="Q">Q</button>
+                    <button type="button" class="key" data-key="W">W</button>
+                    <button type="button" class="key" data-key="E">E</button>
+                    <button type="button" class="key" data-key="R">R</button>
+                    <button type="button" class="key" data-key="T">T</button>
+                    <button type="button" class="key" data-key="Y">Y</button>
+                    <button type="button" class="key" data-key="U">U</button>
+                    <button type="button" class="key" data-key="I">I</button>
+                    <button type="button" class="key" data-key="O">O</button>
+                    <button type="button" class="key" data-key="P">P</button>
+                </div>
+                <div class="keyboard-row">
+                    <button type="button" class="key" data-key="A">A</button>
+                    <button type="button" class="key" data-key="S">S</button>
+                    <button type="button" class="key" data-key="D">D</button>
+                    <button type="button" class="key" data-key="F">F</button>
+                    <button type="button" class="key" data-key="G">G</button>
+                    <button type="button" class="key" data-key="H">H</button>
+                    <button type="button" class="key" data-key="J">J</button>
+                    <button type="button" class="key" data-key="K">K</button>
+                    <button type="button" class="key" data-key="L">L</button>
+                </div>
+                <div class="keyboard-row">
+                    <button type="button" class="key key-wide" data-key="ENTER">ENTER</button>
+                    <button type="button" class="key" data-key="Z">Z</button>
+                    <button type="button" class="key" data-key="X">X</button>
+                    <button type="button" class="key" data-key="C">C</button>
+                    <button type="button" class="key" data-key="V">V</button>
+                    <button type="button" class="key" data-key="B">B</button>
+                    <button type="button" class="key" data-key="N">N</button>
+                    <button type="button" class="key" data-key="M">M</button>
+                    <button type="button" class="key key-wide" data-key="BACKSPACE">⌫</button>
+                </div>
+            </div>
         </section>
     </main>
 
@@ -59,7 +769,7 @@
         <p>WordSprint. Word Challenge Application.</p>
     </footer>
 
-    <script src="js/game.js"></script>
+    <script src="js/game.js?v=5.0"></script>
 </body>
 
 </html>

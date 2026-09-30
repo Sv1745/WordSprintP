@@ -5,6 +5,7 @@ document.addEventListener("DOMContentLoaded", function () {
     let currentGameId = null;
     let currentAttempt = 0;
     let maxAttempts = 6;
+    let letterStates = {};
 
     // DOM Elements
     const startGameButton = document.getElementById("start-game-button");
@@ -18,6 +19,14 @@ document.addEventListener("DOMContentLoaded", function () {
     const errorMessage = document.getElementById("error-message");
     const successMessage = document.getElementById("success-message");
     const startSection = document.getElementById("start-section");
+
+    // Helper to update status pill UI
+    function setGameStatus(statusStr) {
+        if (!gameStatusText) return;
+        gameStatusText.textContent = statusStr;
+        const normalized = (statusStr || "IDLE").toLowerCase().replace(/_/g, "-");
+        gameStatusText.className = "status-pill status-" + normalized;
+    }
 
     // Clear alert messages
     function clearMessages() {
@@ -49,11 +58,184 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // Render/Reset the game board grid dynamically based on maxAttempts
-    function renderBoard(maxAttemptsNum) {
-        if (maxAttemptsNum) {
-            maxAttempts = maxAttemptsNum;
+    // Live Tile Row Typing Preview
+    function updateActiveRowPreview() {
+        if (!currentGameId || currentAttempt < 0 || (currentAttempt + 1) > maxAttempts) return;
+        const activeAttemptNum = currentAttempt + 1;
+        const row = document.querySelector(`.board-row[data-row="${activeAttemptNum}"]`);
+        if (!row) return;
+
+        const tiles = row.querySelectorAll(".tile");
+        if (tiles.length === 0 || tiles[0].classList.contains("tile-green") || tiles[0].classList.contains("tile-yellow") || tiles[0].classList.contains("tile-grey")) {
+            return;
         }
+
+        const text = guessInput ? guessInput.value.toUpperCase() : "";
+        for (let i = 0; i < 5; i++) {
+            const letter = text.charAt(i) || "";
+            tiles[i].textContent = letter;
+        }
+    }
+
+    if (guessInput) {
+        guessInput.addEventListener("input", function () {
+            guessInput.value = guessInput.value.toUpperCase();
+            updateActiveRowPreview();
+        });
+    }
+
+    // Update letter color states for the 26 English letters tracker keyboard
+    function updateKeyboard(guessWord, resultFeedback) {
+        if (!guessWord || !resultFeedback) return;
+        const priority = { 'G': 3, 'Y': 2, 'B': 1 };
+
+        const word = guessWord.toUpperCase().trim();
+        const feedback = resultFeedback.toUpperCase().trim();
+
+        for (let i = 0; i < word.length && i < feedback.length; i++) {
+            const letter = word.charAt(i);
+            const feedbackChar = feedback.charAt(i);
+
+            if (letter >= 'A' && letter <= 'Z') {
+                const currentPriority = priority[letterStates[letter]] || 0;
+                const newPriority = priority[feedbackChar] || 0;
+
+                if (newPriority > currentPriority) {
+                    letterStates[letter] = feedbackChar;
+                }
+            }
+        }
+
+        renderKeyboardState();
+    }
+
+    // Render CSS classes and inline styles on keyboard letter buttons
+    function renderKeyboardState() {
+        const keys = document.querySelectorAll(".key[data-key]");
+        keys.forEach(key => {
+            const letter = (key.getAttribute("data-key") || "").toUpperCase();
+            if (letter.length === 1 && letter >= 'A' && letter <= 'Z') {
+                const state = letterStates[letter];
+                key.classList.remove("key-green", "key-yellow", "key-grey");
+                if (state === 'G') {
+                    key.classList.add("key-green");
+                    key.style.backgroundColor = "#059669";
+                    key.style.borderColor = "#059669";
+                    key.style.color = "#ffffff";
+                    key.style.opacity = "1";
+                } else if (state === 'Y') {
+                    key.classList.add("key-yellow");
+                    key.style.backgroundColor = "#d97706";
+                    key.style.borderColor = "#d97706";
+                    key.style.color = "#ffffff";
+                    key.style.opacity = "1";
+                } else if (state === 'B') {
+                    key.classList.add("key-grey");
+                    key.style.backgroundColor = "#64748b";
+                    key.style.borderColor = "#64748b";
+                    key.style.color = "#ffffff";
+                    key.style.opacity = "0.6";
+                } else {
+                    key.style.backgroundColor = "";
+                    key.style.borderColor = "";
+                    key.style.color = "";
+                    key.style.opacity = "";
+                }
+            }
+        });
+    }
+
+    // Reset letter states and keyboard key colors
+    function resetKeyboardState() {
+        letterStates = {};
+        const keys = document.querySelectorAll(".key[data-key]");
+        keys.forEach(key => {
+            key.classList.remove("key-green", "key-yellow", "key-grey");
+            key.style.backgroundColor = "";
+            key.style.borderColor = "";
+            key.style.color = "";
+            key.style.opacity = "";
+        });
+    }
+
+    // Attach click listeners for on-screen 26-letter keyboard
+    function initKeyboardListeners() {
+        const keyboardContainer = document.getElementById("keyboard-container");
+        if (!keyboardContainer) return;
+
+        keyboardContainer.addEventListener("click", function (event) {
+            const keyBtn = event.target.closest(".key");
+            if (!keyBtn) return;
+
+            event.preventDefault();
+
+            const keyValue = (keyBtn.getAttribute("data-key") || "").toUpperCase();
+            if (!keyValue) return;
+
+            if (keyValue === "ENTER") {
+                if (!currentGameId) {
+                    startNewGame();
+                    return;
+                }
+                if (guessForm && guessForm.style.display !== "none") {
+                    handleGuessSubmit(new Event("submit"));
+                }
+            } else if (keyValue === "BACKSPACE") {
+                if (guessInput) {
+                    guessInput.value = guessInput.value.slice(0, -1);
+                    updateActiveRowPreview();
+                    guessInput.focus();
+                }
+            } else if (keyValue.length === 1 && keyValue >= 'A' && keyValue <= 'Z') {
+                if (!currentGameId) {
+                    showError("Please click 'Start New Game' to play.");
+                    return;
+                }
+                if (guessInput && guessInput.value.length < 5) {
+                    guessInput.value = (guessInput.value + keyValue).toUpperCase();
+                    updateActiveRowPreview();
+                    guessInput.focus();
+                }
+            }
+        });
+    }
+
+    initKeyboardListeners();
+
+    // Global physical keyboard listener for frictionless typing anywhere on the page
+    window.addEventListener("keydown", function (event) {
+        if (event.ctrlKey || event.altKey || event.metaKey) return;
+
+        const activeEl = document.activeElement;
+        if (activeEl && (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA") && activeEl !== guessInput) {
+            return;
+        }
+
+        const key = event.key;
+
+        if (key === "Enter") {
+            if (guessForm && guessForm.style.display !== "none") {
+                event.preventDefault();
+                handleGuessSubmit(new Event("submit"));
+            }
+        } else if (key === "Backspace") {
+            if (guessInput && guessForm && guessForm.style.display !== "none") {
+                event.preventDefault();
+                guessInput.value = guessInput.value.slice(0, -1);
+                updateActiveRowPreview();
+            }
+        } else if (/^[a-zA-Z]$/.test(key)) {
+            if (guessInput && guessForm && guessForm.style.display !== "none" && guessInput.value.length < 5) {
+                event.preventDefault();
+                guessInput.value = (guessInput.value + key).toUpperCase();
+                updateActiveRowPreview();
+            }
+        }
+    });
+
+    // Render/Reset the game board grid dynamically based on row count
+    function renderBoard(numRows) {
+        const rows = numRows || maxAttempts;
         if (maxAttemptsCountText) {
             maxAttemptsCountText.textContent = maxAttempts;
         }
@@ -62,7 +244,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!boardContainer) return;
 
         boardContainer.innerHTML = "";
-        for (let r = 1; r <= maxAttempts; r++) {
+        for (let r = 1; r <= rows; r++) {
             const rowDiv = document.createElement("div");
             rowDiv.className = "board-row";
             rowDiv.setAttribute("data-row", r);
@@ -141,8 +323,9 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
             if (response.ok && data.success) {
-                currentGameId = data.gameId;
+                currentGameId = data.gameId || data.game_id;
                 currentAttempt = 0;
+                resetKeyboardState();
 
                 if (data.maxAttempts) {
                     maxAttempts = data.maxAttempts;
@@ -150,7 +333,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 renderBoard(maxAttempts);
 
                 attemptCountText.textContent = "0";
-                gameStatusText.textContent = "IN_PROGRESS";
+                setGameStatus("IN_PROGRESS");
 
                 guessForm.style.display = "flex";
                 startSection.style.display = "none";
@@ -173,7 +356,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Submit a Word Guess
     async function handleGuessSubmit(event) {
-        event.preventDefault();
+        if (event && event.preventDefault) {
+            event.preventDefault();
+        }
         clearMessages();
 
         if (!currentGameId) {
@@ -219,11 +404,12 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
 
                 updateRow(currentAttempt, guessWord, data.result);
+                updateKeyboard(guessWord, data.result);
                 attemptCountText.textContent = currentAttempt;
                 guessInput.value = "";
 
                 if (data.status === "WON") {
-                    gameStatusText.textContent = "WON";
+                    setGameStatus("WON");
                     showSuccess("Congratulations! You guessed the secret word!");
                     guessForm.style.display = "none";
                     startSection.style.display = "flex";
@@ -232,7 +418,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         alert("Congratulations! You guessed the secret word!");
                     }, 100);
                 } else if (data.status === "LOST") {
-                    gameStatusText.textContent = "LOST";
+                    setGameStatus("LOST");
                     const target = data.targetWord ? ` The word was: ${data.targetWord}` : "";
                     showError(`Better luck next time!${target}`);
                     guessForm.style.display = "none";
@@ -266,6 +452,67 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
+    // Rules Dropdown Popover Handlers
+    const rulesToggleBtn = document.getElementById("rules-toggle-btn");
+    const rulesDropdown = document.getElementById("rules-dropdown");
+    const closeRulesDropdownBtn = document.getElementById("close-rules-dropdown-btn");
+
+    function toggleRulesDropdown(event) {
+        if (event) event.stopPropagation();
+        if (!rulesDropdown) return;
+        const isOpen = rulesDropdown.style.display === "flex" || rulesDropdown.style.display === "block";
+        if (isOpen) {
+            closeRulesDropdown();
+        } else {
+            openRulesDropdown();
+        }
+    }
+
+    function openRulesDropdown() {
+        if (rulesDropdown) {
+            rulesDropdown.style.display = "flex";
+            if (rulesToggleBtn) {
+                rulesToggleBtn.classList.add("active");
+                rulesToggleBtn.setAttribute("aria-expanded", "true");
+            }
+        }
+    }
+
+    function closeRulesDropdown() {
+        if (rulesDropdown) {
+            rulesDropdown.style.display = "none";
+            if (rulesToggleBtn) {
+                rulesToggleBtn.classList.remove("active");
+                rulesToggleBtn.setAttribute("aria-expanded", "false");
+            }
+        }
+    }
+
+    if (rulesToggleBtn) {
+        rulesToggleBtn.addEventListener("click", toggleRulesDropdown);
+    }
+
+    if (closeRulesDropdownBtn) {
+        closeRulesDropdownBtn.addEventListener("click", function (event) {
+            event.stopPropagation();
+            closeRulesDropdown();
+        });
+    }
+
+    // Dismiss dropdown when clicking anywhere outside
+    document.addEventListener("click", function (event) {
+        if (!rulesDropdown || rulesDropdown.style.display === "none") return;
+        if (!rulesDropdown.contains(event.target) && !rulesToggleBtn.contains(event.target)) {
+            closeRulesDropdown();
+        }
+    });
+
+    window.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && rulesDropdown && rulesDropdown.style.display !== "none") {
+            closeRulesDropdown();
+        }
+    });
+
     // Attach Event Listeners
     if (startGameButton) {
         startGameButton.addEventListener("click", startNewGame);
@@ -291,34 +538,46 @@ document.addEventListener("DOMContentLoaded", function () {
 
             const data = await response.json();
             if (response.ok && data.success) {
-                currentGameId = data.gameId;
+                currentGameId = data.gameId || data.game_id || gameId;
                 currentAttempt = 0;
+                resetKeyboardState();
 
                 if (data.maxAttempts) {
                     maxAttempts = data.maxAttempts;
                 }
-                renderBoard(maxAttempts);
+
+                const totalGuesses = data.guesses ? data.guesses.length : 0;
+                const boardRows = data.boardRows || Math.max(maxAttempts, totalGuesses);
+                renderBoard(boardRows);
 
                 if (data.guesses && data.guesses.length > 0) {
                     data.guesses.forEach(g => {
                         currentAttempt++;
-                        updateRow(currentAttempt, g.guessedWord, g.result);
+                        const word = g.guessedWord || g.guess;
+                        updateRow(currentAttempt, word, g.result);
+                        updateKeyboard(word, g.result);
                     });
                 }
 
                 attemptCountText.textContent = currentAttempt;
-                gameStatusText.textContent = data.status;
+                maxAttemptsCountText.textContent = maxAttempts;
+                setGameStatus(data.status);
 
                 if (data.status === "IN_PROGRESS") {
                     guessForm.style.display = "flex";
                     startSection.style.display = "none";
                     guessInput.value = "";
                     guessInput.focus();
-                    showSuccess(`Resumed Game #${currentGameId}. ${maxAttempts - currentAttempt} attempts remaining.`);
+                    const remaining = Math.max(0, maxAttempts - currentAttempt);
+                    showSuccess(`Resumed Game #${currentGameId}. ${remaining} attempts remaining.`);
                 } else {
                     guessForm.style.display = "none";
                     startSection.style.display = "flex";
-                    showError(`Game #${currentGameId} is already ${data.status}.`);
+                    if (data.status === "LOST" && currentAttempt >= maxAttempts) {
+                        showError(`Game #${currentGameId} is LOST (maximum attempt limit of ${maxAttempts} reached).`);
+                    } else {
+                        showError(`Game #${currentGameId} is already ${data.status}.`);
+                    }
                 }
             } else {
                 showError(data.message || "Failed to load game details.");

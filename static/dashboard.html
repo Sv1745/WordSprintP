@@ -5,7 +5,49 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WordSprint - Dashboard</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=6.0">
+    <style>
+        .filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.85rem;
+            background: #f8fafc;
+            border: 1px solid var(--border-color, #e2e8f0);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            margin: 1.25rem 0 1rem 0;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+        }
+
+        .filter-label {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-secondary, #334155);
+            white-space: nowrap;
+        }
+
+        .filter-input, .filter-select {
+            height: 36px;
+            padding: 0 0.65rem;
+            font-size: 0.85rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-color, #cbd5e1);
+            background-color: #ffffff;
+            color: var(--text-primary, #0f172a);
+            outline: none;
+            transition: border-color 0.15s ease;
+        }
+
+        .filter-input:focus, .filter-select:focus {
+            border-color: var(--brand-blue, #0033ad);
+        }
+    </style>
 </head>
 
 <body>
@@ -19,12 +61,12 @@
         </nav>
     </header>
 
-    <main style="align-items: flex-start; padding-top: 2.5rem;">
-        <div class="card" style="max-width: 900px;">
+    <main style="align-items: flex-start; padding-top: 2rem;">
+        <div class="card" style="max-width: 960px; width: 100%;">
             <div class="game-header">
                 <div>
                     <h2>Player Dashboard</h2>
-                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.2rem;">Overview of your matches, streak performance, and active sessions.</p>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.2rem;">Overview of your matches, daily limits, and game performance.</p>
                 </div>
                 <span id="user-welcome" style="font-weight: 700; color: var(--brand-blue); background: var(--brand-blue-light); padding: 0.4rem 0.9rem; border-radius: 9999px; border: 1px solid var(--brand-blue-border); font-size: 0.88rem;">Welcome!</span>
             </div>
@@ -32,7 +74,7 @@
             <div id="error-message" class="error-message"></div>
             <div id="success-message" class="success-message"></div>
 
-            <!-- Stats Overview Cards -->
+            <!-- Stats Overview Cards including Daily Games Left -->
             <div class="stats-grid">
                 <div class="stat-card">
                     <span class="stat-num" id="stat-total">0</span>
@@ -50,24 +92,52 @@
                     <span class="stat-num" id="stat-inprogress" style="color: var(--tile-yellow);">0</span>
                     <span class="stat-label">In-Progress</span>
                 </div>
+                <div class="stat-card" style="background: var(--brand-blue-light); border-color: var(--brand-blue-border);">
+                    <span class="stat-num" id="stat-daily-left" style="color: var(--brand-blue);">0 / 0</span>
+                    <span class="stat-label" style="color: var(--brand-blue); font-weight: 800;">Daily Games Left</span>
+                </div>
             </div>
 
-            <div class="button-group" style="justify-content: flex-start; margin-bottom: 2rem;">
+            <div class="button-group" style="justify-content: flex-start; margin-bottom: 1.5rem;">
                 <a href="game.html" class="btn btn-primary">Start New Game</a>
                 <a href="profile.html" class="btn btn-secondary">View Profile</a>
             </div>
 
+            <!-- History & Reports Filter Bar -->
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <label for="history-date-filter" class="filter-label">Filter by Date:</label>
+                    <input type="date" id="history-date-filter" class="filter-input" title="Filter by match date">
+                </div>
+                <div class="filter-group">
+                    <label for="history-status-filter" class="filter-label">Match Status:</label>
+                    <select id="history-status-filter" class="filter-select">
+                        <option value="ALL">All Statuses</option>
+                        <option value="WON">Won</option>
+                        <option value="LOST">Lost</option>
+                        <option value="IN_PROGRESS">In Progress</option>
+                    </select>
+                </div>
+                <button type="button" id="history-reset-btn" class="btn btn-secondary btn-sm" style="margin-left: auto;">Clear Filters</button>
+            </div>
+
             <!-- Active / Unfinished Games Section -->
-            <section style="margin-top: 2rem; background: var(--bg-main); padding: 1.5rem; border-radius: 10px; border: 1px solid var(--border-color);">
-                <h3 style="margin-bottom: 0.85rem; color: var(--text-primary); font-size: 1.1rem; font-weight: 700;">Active & Unfinished Games</h3>
+            <section style="margin-top: 1.25rem; background: var(--bg-main); padding: 1.25rem 1.5rem; border-radius: 10px; border: 1px solid var(--border-color);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                    <h3 style="color: var(--text-primary); font-size: 1.05rem; font-weight: 700; margin: 0;">Active & Unfinished Games</h3>
+                    <span id="active-count-badge" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);"></span>
+                </div>
                 <div id="active-games-list">
                     <p style="color: var(--text-muted);">Loading active games...</p>
                 </div>
             </section>
 
             <!-- Recent Finished Games Section -->
-            <section style="margin-top: 2rem;">
-                <h3 style="margin-bottom: 0.85rem; color: var(--text-primary); font-size: 1.1rem; font-weight: 700;">Recent Game History</h3>
+            <section style="margin-top: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                    <h3 style="color: var(--text-primary); font-size: 1.05rem; font-weight: 700; margin: 0;">Player Match History & Reports</h3>
+                    <span id="finished-count-badge" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);"></span>
+                </div>
                 <div id="finished-games-list">
                     <p style="color: var(--text-muted);">Loading history...</p>
                 </div>
@@ -79,7 +149,7 @@
         <p>WordSprint. Word Challenge Application.</p>
     </footer>
 
-    <script src="js/dashboard.js"></script>
+    <script src="js/dashboard.js?v=6.0"></script>
 </body>
 
 </html>
